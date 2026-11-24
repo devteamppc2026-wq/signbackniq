@@ -4,7 +4,6 @@
   "buildCommand": "npm run build",
   "functions": {
     "api/index.mjs": {
-      "includeFiles": "public/**",
       "maxDuration": 300
     }
   },

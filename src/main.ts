@@ -8,7 +8,7 @@ try {
   const config = app.get<AppConfig>(APP_CONFIG);
   app.enableShutdownHooks();
   await app.listen(config.port, '127.0.0.1');
-  console.log(`Admin page at http://127.0.0.1:${config.port}/admin`);
+  console.log(`Backend health at http://127.0.0.1:${config.port}/api/health`);
 } catch {
   console.error('Could not start the server. Check the configuration and the local port.');
   await app?.close();

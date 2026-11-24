@@ -6,17 +6,23 @@ import { createHash } from 'node:crypto';
 import { AUTH_REPOSITORY, type AuthRepository } from './modules/auth/auth.repository.js';
 import type { Permission } from './modules/auth/identity.js';
 
-test('feature modules register the dashboard, guard admin endpoints, and validate public inputs', async () => {
+test('the backend serves APIs and media routes, guards admin endpoints, and validates public inputs', async () => {
   const app = await createApplication();
   try {
     await app.listen(0, '127.0.0.1');
     const base = await app.getUrl();
     const config = app.get<AppConfig>(APP_CONFIG);
-    const admin = await fetch(base + '/admin');
-    assert.equal(admin.status, 200);
-    assert.match(await admin.text(), /data-tab="videos"/);
-    assert.equal((await fetch(base + '/assets/admin.js')).status, 200);
-    assert.equal((await fetch(base + '/screen/main')).status, 200);
+    for (const path of [
+      '/',
+      '/admin',
+      '/admin.html',
+      '/screen/main',
+      '/screen.html',
+      '/assets/admin.js',
+      '/assets/screen.js',
+    ]) {
+      assert.equal((await fetch(base + path)).status, 404, path);
+    }
 
     for (const route of ['news', 'settings', 'ticker', 'screens', 'video-schedules', 'users']) {
       const result = await fetch(base + '/api/admin/' + route);
