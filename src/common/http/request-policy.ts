@@ -4,7 +4,6 @@ import cookieParser from 'cookie-parser';
 import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
 import type { AppConfig } from '../../core/config/app-config.js';
-import { isFirebaseDashboardOrigin } from './dashboard-origin.js';
 
 export function isReadMethod(method: string) {
   return ['GET', 'HEAD', 'OPTIONS'].includes(method);
@@ -25,26 +24,8 @@ export function configureRequestPolicy(app: NestExpressApplication, config: AppC
     }),
   );
   app.use(cookieParser());
-  app.use('/uploads', (_request: Request, response: Response, next: NextFunction) => {
-    response.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    next();
-  });
-  app.use('/api', (request: Request, response: Response, next: NextFunction) => {
+  app.use('/api', (_request: Request, response: Response, next: NextFunction) => {
     response.setHeader('Cache-Control', 'no-store');
-    response.vary('Origin');
-    const origin = request.get('origin');
-    if (isFirebaseDashboardOrigin(origin)) {
-      response.setHeader('Access-Control-Allow-Origin', origin);
-      response.setHeader('Access-Control-Allow-Credentials', 'true');
-      response.setHeader('Access-Control-Expose-Headers', 'X-CSRF-Token');
-      if (request.method === 'OPTIONS' && request.get('Access-Control-Request-Method')) {
-        response.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, POST, PUT, DELETE');
-        response.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-CSRF-Token');
-        response.setHeader('Access-Control-Max-Age', '600');
-        response.status(204).end();
-        return;
-      }
-    }
     next();
   });
   app.use(
@@ -63,8 +44,7 @@ export function configureRequestPolicy(app: NestExpressApplication, config: AppC
   );
   app.use('/api', (request: Request, response: Response, next: NextFunction) => {
     const origin = request.get('origin');
-    const trustedOrigin =
-      origin && (origin === config.origin || origin === config.hostedOrigin || isFirebaseDashboardOrigin(origin));
+    const trustedOrigin = origin && (origin === config.origin || origin === config.hostedOrigin);
     const displayLogin =
       request.method === 'POST' &&
       /^\/auth\/login\/?$/i.test(request.path) &&
