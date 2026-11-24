@@ -2,6 +2,7 @@ import { Injectable, type CanActivate, type ExecutionContext } from '@nestjs/com
 import type { Request, Response } from 'express';
 import { isReadMethod } from '../../common/http/request-policy.js';
 import { AuthService } from './auth.service.js';
+import { requestSession } from './session-cookies.js';
 
 @Injectable()
 export class SessionGuard implements CanActivate {
@@ -12,7 +13,7 @@ export class SessionGuard implements CanActivate {
     const request = http.getRequest<Request>();
     const response = http.getResponse<Response>();
     response.locals.user = await this.auth.authorize(
-      request.cookies.union_session,
+      requestSession(request),
       request.get('X-CSRF-Token'),
       !isReadMethod(request.method),
     );
