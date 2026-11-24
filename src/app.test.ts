@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import { createApplication } from './app.js';
 import { APP_CONFIG, type AppConfig } from './core/config/app-config.js';
 import { createHash } from 'node:crypto';
+import bcrypt from 'bcryptjs';
 import { AUTH_REPOSITORY, type AuthRepository } from './modules/auth/auth.repository.js';
 import type { Permission } from './modules/auth/identity.js';
 
@@ -95,6 +96,75 @@ test('editors need the exact news permission and admin-only routes stay restrict
 
     permissions = [];
     assert.equal(await call('admin/news'), 403);
+  } finally {
+    await app.close();
+  }
+});
+
+test('Firebase Hosting gets isolated cookies, exact-origin CORS and CSRF protection', async () => {
+  const app = await createApplication();
+  const repository = app.get<AuthRepository>(AUTH_REPOSITORY);
+  const email = 'test-dashboard@example.invalid';
+  const password = 'test-dashboard-password';
+  const passwordHash = await bcrypt.hash(password, 4);
+  let storedSession: string | undefined;
+  let storedCsrf: string | undefined;
+  repository.account = async () => ({ id: 1, passwordHash });
+  repository.createSession = async (hash, _userId, csrfHash) => {
+    storedSession = hash;
+    storedCsrf = csrfHash;
+  };
+  repository.session = async (hash) =>
+    hash === storedSession && storedCsrf
+      ? { user: { id: 1, email, role: 'admin', permissions: [] }, csrfHash: storedCsrf }
+      : undefined;
+  repository.removeSession = async (hash) => {
+    if (hash === storedSession) storedSession = undefined;
+  };
+
+  try {
+    await app.listen(0, '127.0.0.1');
+    const base = await app.getUrl() + '/api/auth';
+    const origin = 'https://control-board-2d1be.web.app';
+    const preflight = await fetch(`${base}/login`, {
+      method: 'OPTIONS',
+      headers: { Origin: origin, 'Access-Control-Request-Method': 'POST' },
+    });
+    assert.equal(preflight.status, 204);
+    assert.equal(preflight.headers.get('Access-Control-Allow-Origin'), origin);
+    assert.equal(preflight.headers.get('Access-Control-Allow-Credentials'), 'true');
+
+    const login = await fetch(`${base}/login`, {
+      method: 'POST',
+      headers: { Origin: origin, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    assert.equal(login.status, 200);
+    const cookies = login.headers.getSetCookie();
+    assert.equal(cookies.length, 2);
+    for (const cookie of cookies) {
+      assert.match(cookie, /^__Host-dashboard_(session|csrf)=/);
+      for (const attribute of ['Path=/', 'HttpOnly', 'Secure', 'Partitioned', 'SameSite=None']) {
+        assert.ok(cookie.includes(attribute), attribute);
+      }
+    }
+    const Cookie = cookies.map((cookie) => cookie.split(';', 1)[0]).join('; ');
+    const foreign = await fetch(`${base}/me`, { headers: { Origin: origin + '.invalid', Cookie } });
+    assert.equal(foreign.status, 401);
+    assert.equal(foreign.headers.get('Access-Control-Allow-Origin'), null);
+    const me = await fetch(`${base}/me`, { headers: { Origin: origin, Cookie } });
+    assert.equal(me.status, 200);
+    assert.equal(me.headers.get('Access-Control-Expose-Headers'), 'X-CSRF-Token');
+    const csrf = me.headers.get('X-CSRF-Token');
+    assert.match(csrf ?? '', /^[a-f0-9]{64}$/);
+    const denied = await fetch(`${base}/logout`, { method: 'POST', headers: { Origin: origin, Cookie } });
+    assert.equal(denied.status, 403);
+    const logout = await fetch(`${base}/logout`, {
+      method: 'POST', headers: { Origin: origin, Cookie, 'X-CSRF-Token': csrf! },
+    });
+    assert.equal(logout.status, 204);
+    assert.equal(logout.headers.getSetCookie().length, 2);
+    assert.equal((await fetch(`${base}/me`, { headers: { Origin: origin, Cookie } })).status, 401);
   } finally {
     await app.close();
   }
