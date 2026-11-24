@@ -44,12 +44,13 @@ export function configureRequestPolicy(app: NestExpressApplication, config: AppC
   );
   app.use('/api', (request: Request, response: Response, next: NextFunction) => {
     const origin = request.get('origin');
+    const trustedOrigin = origin && (origin === config.origin || origin === config.hostedOrigin);
     const displayLogin =
       request.method === 'POST' &&
       /^\/auth\/login\/?$/i.test(request.path) &&
       !!config.displayOrigin &&
       origin === config.displayOrigin;
-    if (!isReadMethod(request.method) && origin !== config.origin && !displayLogin) {
+    if (!isReadMethod(request.method) && !trustedOrigin && !displayLogin) {
       response.status(403).json({ message: 'الطلب لازم ييجي من عنوان لوحة الإدارة.' });
       return;
     }

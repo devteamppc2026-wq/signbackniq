@@ -30,6 +30,10 @@ export function loadConfig() {
     port: Number(process.env.PORT || 3100),
     production: process.env.NODE_ENV === 'production',
     origin: process.env.APP_ORIGIN || 'http://127.0.0.1:3100',
+    hostedOrigin:
+      env.VERCEL_ENV === 'production' && env.VERCEL_PROJECT_PRODUCTION_URL
+        ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
+        : undefined,
     displayOrigin: process.env.DISPLAY_ORIGIN || undefined,
     trustProxy: process.env.TRUST_PROXY === '1',
     cloudinary: cloudName && apiKey && apiSecret ? { cloudName, apiKey, apiSecret } : undefined,
