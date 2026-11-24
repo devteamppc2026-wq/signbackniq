@@ -1,0 +1,43 @@
+{
+  "name": "niq-signing-screen",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "tsc",
+    "vercel-build": "npm run build",
+    "start": "node dist/main.js",
+    "test": "npm run build && node --test dist/*.test.js",
+    "db:setup": "npm run build && node dist/setup-database.js",
+    "seed:admin": "npm run build && node dist/seed-admin.js",
+    "admin:create": "npm run seed:admin"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.0",
+    "@nestjs/core": "^11.1.0",
+    "@nestjs/platform-express": "^11.1.0",
+    "bcryptjs": "^3.0.2",
+    "cheerio": "^1.2.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.3",
+    "entities": "^9.0.0",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.2.1",
+    "fast-xml-parser": "^5.12.1",
+    "helmet": "^8.1.0",
+    "multer": "^2.0.2",
+    "mysql2": "^3.15.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "sharp": "^0.35.5",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.9",
+    "@types/express": "^5.0.5",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^24.10.0",
+    "typescript": "~5.9.3"
+  }
+}

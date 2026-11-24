@@ -1,0 +1,11 @@
+.env*
+!.env.example
+.vercel/
+*.pem
+*.key
+*.pfx
+*.p12
+node_modules/
+dist/
+uploads/
+*.log

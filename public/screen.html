@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>شاشة النقابة</title>
+  <link rel="stylesheet" href="/assets/site.css?v=2">
+  <script src="/assets/screen.js?v=3" type="module"></script>
+</head>
+<body class="tv">
+  <header class="masthead"><div><p class="eyebrow">النقابة العامة للعاملين بالبترول</p><h1 id="screen-name">شاشة النقابة</h1></div><time id="clock" dir="ltr"></time></header>
+  <main class="tv-main">
+    <article id="story" class="tv-story" hidden>
+      <img id="story-image" alt="" hidden>
+      <video id="story-video" muted playsinline autoplay loop hidden></video>
+      <div><h2 id="story-title"></h2><p id="story-body"></p></div>
+    </article>
+    <video id="screen-video" muted playsinline autoplay loop hidden></video>
+    <p id="screen-status" role="status">جارٍ تحميل محتوى الشاشة…</p>
+  </main>
+  <footer id="tv-ticker" role="region" aria-label="الأخبار الهامة" tabindex="0" hidden>
+    <div id="tv-ticker-track">
+      <div class="tv-ticker-group"><span id="tv-ticker-text" class="tv-ticker-item"></span></div>
+      <div class="tv-ticker-group" aria-hidden="true"></div>
+    </div>
+  </footer>
+</body>
+</html>

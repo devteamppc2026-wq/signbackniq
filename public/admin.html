@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>إدارة شاشات النقابة</title>
+  <link rel="stylesheet" href="/assets/site.css">
+  <script src="/assets/admin.js" type="module"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div><p class="eyebrow">النقابة العامة للعاملين بالبترول</p><h1>إدارة شاشات النقابة</h1></div>
+    <div id="session-actions" class="actions" hidden>
+      <a href="/screen/main" target="_blank" rel="noopener">معاينة الشاشة الرئيسية ↗</a>
+      <button id="logout" class="secondary" type="button">خروج</button>
+    </div>
+  </header>
+  <main>
+    <p id="feedback" role="status" aria-live="polite" hidden></p>
+    <form id="login" class="panel login">
+      <h2>تسجيل الدخول</h2>
+      <label>البريد الإلكتروني<input name="email" type="email" dir="ltr" autocomplete="username" required></label>
+      <label>كلمة المرور<input name="password" type="password" dir="ltr" autocomplete="current-password" required></label>
+      <button>دخول</button>
+    </form>
+    <div id="dashboard" hidden>
+      <nav aria-label="أقسام الإدارة" class="sections">
+        <button type="button" data-tab="news" aria-pressed="true">الأخبار</button>
+        <button type="button" data-tab="ticker" aria-pressed="false">الشريط الأحمر</button>
+        <button type="button" data-tab="videos" aria-pressed="false">جدولة الفيديو</button>
+        <button type="button" data-tab="screens" aria-pressed="false">الشاشات</button>
+        <button type="button" data-tab="users" aria-pressed="false">المستخدمين</button>
+      </nav>
+      <p id="no-access" class="panel" hidden>حسابك لسه ملوش صلاحيات. تواصل مع مدير النظام.</p>
+      <section id="news" class="columns">
+        <form id="news-form" class="panel editor">
+          <h2 id="news-heading">إضافة خبر</h2>
+          <label>العنوان<input name="title" required minlength="3" maxlength="180"></label>
+          <label>الوصف<textarea name="body" required minlength="3" maxlength="2000" rows="5"></textarea></label>
+          <label>صورة الخبر<input name="file" type="file" accept="image/jpeg,image/png,image/webp"></label>
+          <div class="actions" id="photo-actions" hidden><a id="photo-link" target="_blank" rel="noopener">عرض المرفق الحالي</a><button id="remove-photo" type="button" class="quiet">إزالة المرفق</button></div>
+          <div class="fields">
+            <label>مدة الشريحة بالثواني<input name="slideSeconds" type="number" min="5" max="120" placeholder="مدة الشاشة الافتراضية"></label>
+            <label>الحالة<select name="status"><option value="published">منشور</option><option value="draft">مسودة</option></select></label>
+          </div>
+          <div class="fields">
+            <label>بداية الظهور<input name="startsAt" type="datetime-local" dir="ltr"></label>
+            <label>نهاية الظهور<input name="endsAt" type="datetime-local" dir="ltr"></label>
+          </div>
+          <p class="hint">المواعيد بتوقيت جهازك. التاريخ الفاضي يعني عرض فوري أو مستمر حسب الحقل.</p>
+          <div class="actions"><button>حفظ الخبر</button><button type="button" id="reset-news" class="secondary" hidden>إلغاء التعديل</button></div>
+        </form>
+        <div class="panel">
+          <div class="section-head"><h2>الأخبار</h2><label class="checkbox"><input id="show-archive" type="checkbox"> الأرشيف</label></div>
+          <ul id="news-list" class="records"></ul>
+        </div>
+      </section>
+      <section id="ticker" hidden>
+        <form id="ticker-form" class="panel editor">
+          <h2>الشريط الأحمر للشاشة الرئيسية</h2>
+          <label>المحتوى<select name="mode"><option value="text">نص أكتبه بنفسي</option><option value="headlines">عناوين أخبار مختارة</option></select></label>
+          <label>نص الشريط<textarea name="text" maxlength="1500" rows="4"></textarea></label>
+          <p class="hint">النص بيظهر لو العناوين المختارة مش معروضة. سيب النص فاضي لإخفاء الشريط وقتها.</p>
+          <div id="ticker-headlines" hidden>
+            <label>عنوان من الأخبار المنشورة<select id="ticker-choice"></select></label>
+            <button type="button" id="add-headline" class="secondary">أضف للقائمة</button>
+            <ol id="headline-list" class="records"></ol>
+          </div>
+          <button>حفظ الشريط</button>
+        </form>
+      </section>
+      <section id="videos" class="columns" hidden>
+        <form id="video-form" class="panel editor">
+          <h2 id="video-heading">جدولة فيديو</h2>
+          <label>اسم الجدولة<input name="title" required minlength="3" maxlength="180"></label>
+          <label>ملف الفيديو<input name="file" type="file" accept="video/mp4,video/quicktime,video/webm" required></label>
+          <a id="video-link" target="_blank" rel="noopener" hidden>عرض الفيديو الحالي</a>
+          <div class="fields">
+            <label>بداية التشغيل<input name="startsAt" type="datetime-local" dir="ltr" required></label>
+            <label>نهاية التشغيل<input name="endsAt" type="datetime-local" dir="ltr" required></label>
+          </div>
+          <p class="hint">المواعيد بتوقيت جهازك. الحد الأقصى للفيديو 25 ميجابايت.</p>
+          <label>مكان التشغيل<select name="target"><option value="unassigned">لسه هحدد الشاشة</option><option value="screen">شاشة واحدة</option><option value="all">كل الشاشات</option></select></label>
+          <label id="target-screen" hidden>الشاشة<select name="screenId"></select></label>
+          <div class="actions"><button>حفظ الجدولة</button><button id="reset-video" type="button" class="secondary" hidden>إلغاء التعديل</button></div>
+        </form>
+        <div class="panel"><h2>الفيديوهات المجدولة</h2><ul id="video-list" class="records"></ul></div>
+      </section>
+      <section id="screens" class="columns" hidden>
+        <form id="screen-form" class="panel editor">
+          <h2>إضافة شاشة</h2>
+          <label>اسم الشاشة<input name="name" required minlength="2" maxlength="100"></label>
+          <label>كود الشاشة<input name="key" required dir="ltr" maxlength="40" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="meeting-room"></label>
+          <button>إضافة الشاشة</button>
+        </form>
+        <div class="panel"><h2>الشاشات المسجلة</h2><ul id="screen-list" class="records"></ul></div>
+      </section>
+      <section id="users" class="columns" hidden>
+        <form id="user-form" class="panel editor">
+          <h2 id="user-heading">إضافة مستخدم</h2>
+          <fieldset id="user-credentials" class="user-credentials">
+            <legend class="sr-only">بيانات تسجيل الدخول</legend>
+            <label>البريد الإلكتروني<input name="email" type="email" dir="ltr" maxlength="254" autocomplete="off" required></label>
+            <label>كلمة المرور<input name="password" type="password" dir="ltr" minlength="12" maxlength="72" autocomplete="new-password" required></label>
+          </fieldset>
+          <p id="editing-account" dir="ltr" hidden></p>
+          <fieldset class="permission-options">
+            <legend>صلاحيات الأخبار</legend>
+            <label class="checkbox"><input type="checkbox" name="permission" value="news.create"> إضافة خبر</label>
+            <label class="checkbox"><input type="checkbox" name="permission" value="news.update"> تعديل خبر</label>
+            <label class="checkbox"><input type="checkbox" name="permission" value="news.archive"> أرشفة واسترجاع</label>
+            <label class="checkbox"><input type="checkbox" name="permission" value="news.delete"> حذف نهائي</label>
+          </fieldset>
+          <div class="actions"><button id="save-user">إضافة المستخدم</button><button type="button" id="reset-user" class="secondary" hidden>إلغاء التعديل</button></div>
+        </form>
+        <div class="panel"><h2>حسابات المستخدمين</h2><ul id="user-list" class="records"></ul></div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
