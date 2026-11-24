@@ -6,7 +6,7 @@
   "engines": { "node": ">=22" },
   "scripts": {
     "build": "tsc",
-    "vercel-build": "npm run build && node -e \"require('node:fs').mkdirSync('dist/static', { recursive: true })\"",
+    "vercel-build": "npm run build",
     "start": "node dist/main.js",
     "test": "npm run build && node --test dist/*.test.js",
     "db:setup": "npm run build && node dist/setup-database.js",
