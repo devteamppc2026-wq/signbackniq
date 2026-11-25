@@ -4,7 +4,10 @@ import cookieParser from 'cookie-parser';
 import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
 import type { AppConfig } from '../../core/config/app-config.js';
-import { isFirebaseDashboardOrigin } from './dashboard-origin.js';
+import { isFirebaseDashboardOrigin, isFirebaseDisplayOrigin } from './frontend-origins.js';
+
+const loginPath = /^\/auth\/login\/?$/i;
+const displayFeedPath = /^\/(?:display|news\/petroleum|prices\/petroleum)\/?$/i;
 
 export function isReadMethod(method: string) {
   return ['GET', 'HEAD', 'OPTIONS'].includes(method);
@@ -33,13 +36,19 @@ export function configureRequestPolicy(app: NestExpressApplication, config: AppC
     response.setHeader('Cache-Control', 'no-store');
     response.vary('Origin');
     const origin = request.get('origin');
-    if (isFirebaseDashboardOrigin(origin)) {
+    const dashboard = isFirebaseDashboardOrigin(origin);
+    const preflight = request.method === 'OPTIONS' && request.get('Access-Control-Request-Method');
+    const method = preflight || request.method;
+    const display = isFirebaseDisplayOrigin(origin);
+    const displayLogin = display && method === 'POST' && loginPath.test(request.path);
+    const displayRead = display && (method === 'GET' || method === 'HEAD') && displayFeedPath.test(request.path);
+    if (origin && (dashboard || displayLogin || displayRead)) {
       response.setHeader('Access-Control-Allow-Origin', origin);
-      response.setHeader('Access-Control-Allow-Credentials', 'true');
-      response.setHeader('Access-Control-Expose-Headers', 'X-CSRF-Token');
-      if (request.method === 'OPTIONS' && request.get('Access-Control-Request-Method')) {
-        response.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, POST, PUT, DELETE');
-        response.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-CSRF-Token');
+      if (dashboard || displayLogin) response.setHeader('Access-Control-Allow-Credentials', 'true');
+      if (dashboard) response.setHeader('Access-Control-Expose-Headers', 'X-CSRF-Token');
+      if (preflight) {
+        response.setHeader('Access-Control-Allow-Methods', dashboard ? 'GET, HEAD, POST, PUT, DELETE' : method);
+        response.setHeader('Access-Control-Allow-Headers', dashboard ? 'Content-Type, X-CSRF-Token' : 'Content-Type');
         response.setHeader('Access-Control-Max-Age', '600');
         response.status(204).end();
         return;
@@ -67,9 +76,8 @@ export function configureRequestPolicy(app: NestExpressApplication, config: AppC
       origin && (origin === config.origin || origin === config.hostedOrigin || isFirebaseDashboardOrigin(origin));
     const displayLogin =
       request.method === 'POST' &&
-      /^\/auth\/login\/?$/i.test(request.path) &&
-      !!config.displayOrigin &&
-      origin === config.displayOrigin;
+      loginPath.test(request.path) &&
+      (!!origin && (origin === config.displayOrigin || isFirebaseDisplayOrigin(origin)));
     if (!isReadMethod(request.method) && !trustedOrigin && !displayLogin) {
       response.status(403).json({ message: 'الطلب لازم ييجي من عنوان لوحة الإدارة.' });
       return;

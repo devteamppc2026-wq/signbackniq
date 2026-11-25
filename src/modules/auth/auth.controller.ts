@@ -3,7 +3,7 @@ import type { CookieOptions, Request, Response } from 'express';
 import { AuthService } from './auth.service.js';
 import { APP_CONFIG, type AppConfig } from '../../core/config/app-config.js';
 import { ZodValidationPipe } from '../../common/http/zod-validation.pipe.js';
-import { isFirebaseDashboardOrigin } from '../../common/http/dashboard-origin.js';
+import { isFirebaseDashboardOrigin, isFirebaseSignInOrigin } from '../../common/http/frontend-origins.js';
 import { loginInput, type LoginInput } from './auth.dto.js';
 import { SessionGuard } from './session.guard.js';
 import { directDashboardCookies, requestSession } from './session-cookies.js';
@@ -30,7 +30,7 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ) {
     const { session, csrf, email } = await this.auth.login(body, requestSession(request));
-    if (isFirebaseDashboardOrigin(request.get('origin'))) {
+    if (isFirebaseSignInOrigin(request.get('origin'))) {
       const { session: sessionName, csrf: csrfName, options } = directDashboardCookies;
       response.cookie(sessionName, session, { ...options, maxAge: ttl });
       response.cookie(csrfName, csrf, { ...options, maxAge: ttl });

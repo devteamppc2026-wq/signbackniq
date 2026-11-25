@@ -1,5 +1,5 @@
 import type { CookieOptions, Request } from 'express';
-import { isFirebaseDashboardOrigin } from '../../common/http/dashboard-origin.js';
+import { isFirebaseSignInOrigin } from '../../common/http/frontend-origins.js';
 
 export const directDashboardCookies = {
   session: '__Host-dashboard_session',
@@ -8,7 +8,7 @@ export const directDashboardCookies = {
 };
 
 export function requestSession(request: Request): unknown {
-  return isFirebaseDashboardOrigin(request.get('origin'))
+  return isFirebaseSignInOrigin(request.get('origin'))
     ? request.cookies[directDashboardCookies.session]
     : request.cookies.union_session;
 }

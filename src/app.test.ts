@@ -169,3 +169,41 @@ test('Firebase Hosting gets isolated cookies, exact-origin CORS and CSRF protect
     await app.close();
   }
 });
+
+test('the Firebase display can read published feeds and sign in without admin API access', async () => {
+  const app = await createApplication();
+  try {
+    await app.listen(0, '127.0.0.1');
+    const base = await app.getUrl() + '/api';
+    const origin = 'https://petroleum-union.web.app';
+    for (const path of ['/display', '/news/petroleum', '/prices/petroleum']) {
+      const response = await fetch(base + path, {
+        method: 'OPTIONS',
+        headers: { Origin: origin, 'Access-Control-Request-Method': 'GET' },
+      });
+      assert.equal(response.status, 204, path);
+      assert.equal(response.headers.get('Access-Control-Allow-Origin'), origin, path);
+      assert.equal(response.headers.get('Access-Control-Allow-Credentials'), null, path);
+    }
+    const login = await fetch(base + '/auth/login', {
+      method: 'POST',
+      headers: { Origin: origin, 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    assert.equal(login.status, 400);
+    assert.equal(login.headers.get('Access-Control-Allow-Credentials'), 'true');
+
+    const admin = await fetch(base + '/admin/news', {
+      method: 'POST',
+      headers: { Origin: origin },
+    });
+    assert.equal(admin.status, 403);
+    assert.equal(admin.headers.get('Access-Control-Allow-Origin'), null);
+
+    const session = await fetch(base + '/auth/me', { headers: { Origin: origin } });
+    assert.equal(session.status, 401);
+    assert.equal(session.headers.get('Access-Control-Allow-Origin'), null);
+  } finally {
+    await app.close();
+  }
+});
